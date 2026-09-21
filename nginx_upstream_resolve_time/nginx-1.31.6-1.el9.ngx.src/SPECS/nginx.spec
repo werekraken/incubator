@@ -4,6 +4,7 @@
 %define nginx_group nginx
 %define nginx_loggroup adm
 
+BuildRequires: gcc
 BuildRequires: systemd
 Requires(post): systemd
 Requires(preun): systemd
