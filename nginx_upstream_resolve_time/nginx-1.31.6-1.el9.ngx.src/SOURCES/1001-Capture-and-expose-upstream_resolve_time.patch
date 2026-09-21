@@ -1,0 +1,131 @@
+From dca3a31bfb76529ac12c0fbafe869ca9690f8b04 Mon Sep 17 00:00:00 2001
+From: Matt Cover <werekraken@gmail.com>
+Date: Sat, 19 Sep 2026 21:12:32 -0700
+Subject: [PATCH] Capture and expose upstream_resolve_time.
+
+---
+ src/http/ngx_http_upstream.c | 43 ++++++++++++++++++++++++++++++++++++
+ src/http/ngx_http_upstream.h |  4 ++++
+ 2 files changed, 47 insertions(+)
+
+diff --git a/src/http/ngx_http_upstream.c b/src/http/ngx_http_upstream.c
+index 3f86534..9ddb6c2 100644
+--- a/src/http/ngx_http_upstream.c
++++ b/src/http/ngx_http_upstream.c
+@@ -419,6 +419,10 @@ static ngx_http_variable_t  ngx_http_upstream_vars[] = {
+       ngx_http_upstream_status_variable, 0,
+       NGX_HTTP_VAR_NOCACHEABLE, 0 },
+ 
++    { ngx_string("upstream_resolve_time"), NULL,
++      ngx_http_upstream_response_time_variable, 3,
++      NGX_HTTP_VAR_NOCACHEABLE, 0 },
++
+     { ngx_string("upstream_connect_time"), NULL,
+       ngx_http_upstream_response_time_variable, 2,
+       NGX_HTTP_VAR_NOCACHEABLE, 0 },
+@@ -739,6 +743,9 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
+ 
+     } else {
+ 
++        u->resolved->start_time = ngx_current_msec;
++        u->resolved->resolve_time = (ngx_msec_t) -1;
++
+ #if (NGX_HTTP_SSL)
+         u->ssl_name = u->resolved->host;
+ #endif
+@@ -1294,6 +1301,10 @@ ngx_http_upstream_resolve_handler(ngx_resolver_ctx_t *ctx)
+     ngx_resolve_name_done(ctx);
+     ur->ctx = NULL;
+ 
++    if (u->resolved && u->resolved->resolve_time == (ngx_msec_t) -1) {
++        u->resolved->resolve_time = ngx_current_msec - u->resolved->start_time;
++    }
++
+     u->peer.start_time = ngx_current_msec;
+ 
+     if (u->conf->next_upstream_tries
+@@ -1591,6 +1602,12 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
+ 
+     u->start_time = ngx_current_msec;
+ 
++    u->state->resolve_time = (ngx_msec_t) -1;
++    if (u->resolved && u->resolved->resolve_time != (ngx_msec_t) -1) {
++        u->state->resolve_time = u->resolved->resolve_time;
++        u->resolved->resolve_time = (ngx_msec_t) -1;
++    }
++
+     u->state->response_time = (ngx_msec_t) -1;
+     u->state->connect_time = (ngx_msec_t) -1;
+     u->state->header_time = (ngx_msec_t) -1;
+@@ -4788,6 +4805,10 @@ ngx_http_upstream_finalize_request(ngx_http_request_t *r,
+     if (u->resolved && u->resolved->ctx) {
+         ngx_resolve_name_done(u->resolved->ctx);
+         u->resolved->ctx = NULL;
++
++        if (u->resolved->resolve_time == (ngx_msec_t) -1) {
++            u->resolved->resolve_time = ngx_current_msec - u->resolved->start_time;
++        }
+     }
+ 
+     if (u->state && u->state->response_time == (ngx_msec_t) -1) {
+@@ -4804,6 +4825,25 @@ ngx_http_upstream_finalize_request(ngx_http_request_t *r,
+         }
+     }
+ 
++    if (u->resolved && u->resolved->resolve_time != (ngx_msec_t) -1) {
++        if (u->state == NULL) {
++            u->state = ngx_array_push(r->upstream_states);
++
++            if (u->state) {
++                ngx_memzero(u->state, sizeof(ngx_http_upstream_state_t));
++                u->state->response_time = (ngx_msec_t) -1;
++                u->state->connect_time = (ngx_msec_t) -1;
++                u->state->header_time = (ngx_msec_t) -1;
++                u->state->resolve_time = (ngx_msec_t) -1;
++            }
++        }
++
++        if (u->state) {
++            u->state->resolve_time = u->resolved->resolve_time;
++            u->resolved->resolve_time = (ngx_msec_t) -1;
++        }
++    }
++
+     u->finalize_request(r, rc);
+ 
+     if (u->peer.free && u->peer.sockaddr) {
+@@ -6097,6 +6137,9 @@ ngx_http_upstream_response_time_variable(ngx_http_request_t *r,
+         } else if (data == 2) {
+             ms = state[i].connect_time;
+ 
++        } else if (data == 3) {
++            ms = state[i].resolve_time;
++
+         } else {
+             ms = state[i].response_time;
+         }
+diff --git a/src/http/ngx_http_upstream.h b/src/http/ngx_http_upstream.h
+index 74d55ef..4e1044e 100644
+--- a/src/http/ngx_http_upstream.h
++++ b/src/http/ngx_http_upstream.h
+@@ -66,6 +66,7 @@ typedef struct {
+     ngx_msec_t                       connect_time;
+     ngx_msec_t                       header_time;
+     ngx_msec_t                       queue_time;
++    ngx_msec_t                       resolve_time;
+     off_t                            response_length;
+     off_t                            bytes_received;
+     off_t                            bytes_sent;
+@@ -332,6 +333,9 @@ typedef struct {
+     ngx_str_t                        name;
+ 
+     ngx_resolver_ctx_t              *ctx;
++
++    ngx_msec_t                       start_time;
++    ngx_msec_t                       resolve_time;
+ } ngx_http_upstream_resolved_t;
+ 
+ 
+-- 
+2.34.1
+

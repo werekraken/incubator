@@ -110,7 +110,7 @@ Source7: nginx-debug.service
 Source8: nginx.copyright
 Source9: nginx.check-reload.sh
 
-
+Patch0: 1001-Capture-and-expose-upstream_resolve_time.patch
 
 License: 2-clause BSD-like license
 
