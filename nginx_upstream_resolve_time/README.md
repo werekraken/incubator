@@ -30,6 +30,10 @@ reso.  resp.  conn.  head.  stat.  error
 0.021  0.975  0.068  -      499    client closed request while reading response header from upstream
 0.021  3.068  0.065  -      504    "upstream timed out (110: Connection timed out) while reading response header from upstream"
 0.024  0.098  0.025  0.098  200    OK
+
+                upstream_*_time
+reso.        resp.            conn.            head.            stat.  error
+"- : 0.026"  "0.000 : 0.100"  "0.000 : 0.023"  "0.000 : 0.100"  200    OK
 ```
 
 ### Vanilla (baseline)
@@ -49,6 +53,10 @@ resp.  conn.  head.  stat.  error
 0.997  0.068  -      499    client closed request while reading response header from upstream
 3.069  0.066  -      504    "upstream timed out (110: Connection timed out) while reading response header from upstream"
 0.098  0.024  0.098  200    OK
+
+     upstream_*_time
+resp.            conn.            head.            stat.  error
+"0.000 : 0.104"  "0.000 : 0.024"  "0.000 : 0.104"  200    OK
 ```
 
 ### Comparison
@@ -95,6 +103,14 @@ patched  0.021  3.068  0.065  -      504    "upstream timed out (110: Connection
 
 vanilla         0.098  0.024  0.098  200    OK
 patched  0.024  0.098  0.025  0.098  200    OK
+
+
+
+                       upstream_*_time
+variant  reso.        resp.            conn.            head.            stat.  error
+
+vanilla               "0.000 : 0.104"  "0.000 : 0.024"  "0.000 : 0.104"  200    OK
+patched  "- : 0.026"  "0.000 : 0.100"  "0.000 : 0.023"  "0.000 : 0.100"  200    OK
 ```
 
 ## Build and Test
