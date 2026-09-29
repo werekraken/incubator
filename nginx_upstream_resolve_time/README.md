@@ -1,6 +1,6 @@
 # NGINX `$upstream_resolve_time`
 
-[This patch](nginx-1.31.6-1.el9.ngx.src/SOURCES/1001-Capture-and-expose-upstream_resolve_time.patch) adds `$upstream_resolve_time`.
+[This patch](nginx-1.31.6-1.el9.ngx.src/SOURCES/1001-Capture-and-expose-upstream_resolve_time.patch) (which has been submitted upstream [here](https://github.com/nginx/nginx/pull/1810)) adds `$upstream_resolve_time`.
 
 * `$upstream_resolve_time`:
     - exposes the duration spent resolving hostnames of upstreams.
