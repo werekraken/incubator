@@ -1,6 +1,6 @@
 # memesis
 
-> *When memory has become your nemesis, use `memesis` for that mem-assist.*
+> *When memory becomes your nemesis, use `memesis` for that mem-assist.*
 
 `memesis` is a modern, opinionated CLI memory diagnostic tool for Linux. It provides a high-level summary of memory, grouped by assignment and evictability.
 
