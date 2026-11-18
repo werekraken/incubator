@@ -9,7 +9,7 @@
 The default, high-level summary provided by `memesis` was inspired by `smem -tw`.
 
 However, it makes some improvements upon `smem`:
-* Support for the modern `KReclaimable`.
+* Support for the modern `KReclaimable` (see [upstream fix attempt](contrib/smem/README.md)).
 * Support for explicit memory pools like `Zswap` and `Hugetlb`.
 * Retains only actionable rows.
 

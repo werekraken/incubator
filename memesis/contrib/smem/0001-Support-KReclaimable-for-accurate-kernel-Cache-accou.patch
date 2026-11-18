@@ -1,0 +1,43 @@
+From b25516b9de2e598098cb65f0352d2fec6d6fcf6b Mon Sep 17 00:00:00 2001
+From: Matt Cover <werekraken@gmail.com>
+Date: Wed, 18 Nov 2026 13:08:08 -0700
+Subject: [PATCH] Support KReclaimable for accurate kernel "Cache" accounting
+
+Linux kernel commit 61f94e18de94f79abaad3bb83549ff78923ac785 (merged
+in v4.20) introduced `KReclaimable` to /proc/meminfo. This field tracks
+all reclaimable kernel allocations, superseding `SReclaimable` as the
+source of truth for reclaimable kernel memory.
+
+Currently, smem's high-level summary (-w) calculates kernel "Cache"
+memory using only `SReclaimable`. On modern kernels, this risks
+undercounting reclaimable kernel memory and subsequently skewing the
+"kernel dynamic memory" breakdown by artificially inflating the
+"Noncache" column.
+
+This patch updates showsystem() to use `kreclaimable` if it is present
+in /proc/meminfo, gracefully falling back to `sreclaimable` on older
+kernels to preserve backwards compatibility.
+
+Reference: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=61f94e18de94f79abaad3bb83549ff78923ac785
+Signed-off-by: Matt Cover <werekraken@gmail.com>
+---
+ smem | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/smem b/smem
+index 7020a27..229604b 100755
+--- a/smem
++++ b/smem
+@@ -439,7 +439,8 @@ def showsystem():
+     kd = mt - f - u
+ 
+     # total amount in kernel caches
+-    kdc = m['buffers'] + m['sreclaimable'] + (m['cached'] - m['mapped'])
++    kreclaimable = m.get('kreclaimable', m.get('sreclaimable', 0))
++    kdc = m['buffers'] + kreclaimable + (m['cached'] - m['mapped'])
+ 
+     l = [("firmware/hardware", fh, 0),
+          ("kernel image", ki, 0),
+-- 
+2.34.1
+
