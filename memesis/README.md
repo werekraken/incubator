@@ -54,4 +54,4 @@ This `bash` script validates the math and captures the high-level architectural 
 
 As time permits:
 * `memesis` will be rebuilt in a compiled language (likely Rust) to improve performance and portability.
-* Additional memory information will be parsed from procfs (`meminfo`, `slabinfo`, etc.) and sysfs allowing for granular drill-down views. These views will prioritize surfacing actionable information while troubleshooting memory leaks and memory hogs.
+* Additional memory information will be parsed from procfs (`meminfo`, `slabinfo`, etc.) and sysfs allowing for granular drill-down views. These views will prioritize surfacing actionable information for while troubleshooting memory leaks and memory hogs.
